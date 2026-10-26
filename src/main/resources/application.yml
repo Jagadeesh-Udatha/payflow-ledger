@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: payflow-ledger
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/payflow}
+    username: ${DB_USER:payflow}
+    password: ${DB_PASSWORD:payflow}
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+payflow:
+  outbox:
+    topic: payments.events
+    relay-enabled: true
+    poll-ms: 1000
+  security:
+    # Override every secret in real deployments (PAYFLOW_SECURITY_JWT_SECRET etc.).
+    jwt-secret: ${PAYFLOW_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    token-ttl: 30m
+    ops-password: ${PAYFLOW_OPS_PASSWORD:ops-dev-password}
+    auditor-password: ${PAYFLOW_AUDITOR_PASSWORD:auditor-dev-password}
+    allowed-origin: ${PAYFLOW_ALLOWED_ORIGIN:http://localhost:5173}
