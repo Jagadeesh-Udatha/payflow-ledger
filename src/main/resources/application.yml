@@ -36,7 +36,7 @@ payflow:
     relay-enabled: true
     poll-ms: 1000
   security:
-    # Override every secret in real deployments (PAYFLOW_SECURITY_JWT_SECRET etc.).
+    # Override every secret in real deployments (PAYFLOW_JWT_SECRET, PAYFLOW_OPS_PASSWORD, PAYFLOW_AUDITOR_PASSWORD, DB_PASSWORD).
     jwt-secret: ${PAYFLOW_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
     token-ttl: 30m
     ops-password: ${PAYFLOW_OPS_PASSWORD:ops-dev-password}
