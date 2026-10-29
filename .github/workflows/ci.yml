@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  api:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,21 +13,4 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - run: mvn -B verify
-      - uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: target/site/jacoco
-
-  web:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - run: npm ci
-      - run: npm run build
+      - run: mvn -B verify   # includes the MySQL Testcontainers test (Docker is available on the runner)

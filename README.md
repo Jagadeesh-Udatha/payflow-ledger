@@ -1,10 +1,8 @@
 # PayFlow Ledger
 
-An idempotent payments API on a **double-entry ledger**, with a **transactional outbox** that publishes payment events to **Kafka**, a **JWT-secured** REST API, and a **React + TypeScript** operations console.
+An idempotent payments API on a **double-entry ledger**, with a **transactional outbox** that publishes payment events to **Kafka**, and a **JWT-secured** REST API.
 
-Built with Java 21, Spring Boot 3.4, Spring Security, Spring Data JPA, PostgreSQL, Flyway, Spring Kafka, Micrometer/Prometheus, JUnit 5, Mockito, Docker and GitHub Actions.
-
-![console](docs/console.jpg)
+Built with Java 21, Spring Boot 3.4, Spring Security (JWT), Spring Data JPA / Hibernate, MySQL 8, Apache Kafka (Spring Kafka), Docker, JUnit 5 and Mockito.
 
 ## What it does
 
@@ -19,7 +17,7 @@ Built with Java 21, Spring Boot 3.4, Spring Security, Spring Data JPA, PostgreSQ
 ## Architecture
 
 ```
-React console ──JWT──▶ Spring Boot API ──▶ PostgreSQL
+REST client ──JWT──▶ Spring Boot API ──▶ MySQL
                          │   account · payment · ledger_entry · outbox_event (one transaction)
                          │
                          └─ OutboxRelay (@Scheduled) ──▶ Kafka topic payments.events
@@ -30,17 +28,16 @@ React console ──JWT──▶ Spring Boot API ──▶ PostgreSQL
 Without Docker (in-memory H2, Kafka relay off):
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=local
-cd web && npm install && npm run dev      # http://localhost:5173  (ops / ops-dev-password)
+mvn spring-boot:run -Dspring-boot.run.profiles=local      # http://localhost:8080  (ops / ops-dev-password)
 ```
 
-Full stack with PostgreSQL and Kafka:
+Full stack with MySQL and Kafka:
 
 ```bash
 docker compose up --build
 ```
 
-Swagger UI: http://localhost:8080/swagger-ui.html · Metrics: http://localhost:8080/actuator/prometheus
+Swagger UI: http://localhost:8080/swagger-ui.html · Health: http://localhost:8080/actuator/health
 
 ## API
 
@@ -59,11 +56,12 @@ Errors use RFC 7807 problem details with a stable `code` (`INSUFFICIENT_FUNDS`, 
 ## Tests
 
 ```bash
-mvn verify        # 14 tests + JaCoCo coverage report in target/site/jacoco
+mvn verify        # 15 tests (the MySQL one needs Docker; it is skipped without it)
 ```
 
 - `PaymentServiceTest`: balances, ledger entries, idempotent replay, key reuse conflict, rollback on insufficient funds, frozen accounts, 20-thread overdraw test, opposite-direction deadlock test.
 - `PaymentApiTest`: MockMvc over the real security chain: 401 without token, 403 for auditor writes, 201 then 200 replay, 400 field errors, 422 business errors.
 - `OutboxRelayKafkaTest`: embedded Kafka broker; checks the event key, payload and headers, and that the outbox row is marked published.
+- `MySqlLedgerIntegrationTest`: the same transfer on a real MySQL 8 container (Testcontainers): schema, row locks and the outbox `SKIP LOCKED` query.
 
 See [INTERVIEW_NOTES.md](INTERVIEW_NOTES.md) for the design decisions and trade-offs.

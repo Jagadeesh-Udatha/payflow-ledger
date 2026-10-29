@@ -57,14 +57,14 @@ Writing to the DB and then to Kafka can fail between the two. **Transactional ou
 3. Delivery is **at-least-once**: a crash after send but before commit re-sends. Consumers dedupe on the `event-id` header.
 4. Kafka key = payment id → all events for one payment go to one partition → ordered.
 
-Scaling the relay to several instances: use `SELECT … FOR UPDATE SKIP LOCKED` (PostgreSQL) so instances take different rows, or switch to CDC (Debezium reads the WAL).
+Scaling the relay to several instances: the relay already reads with `SELECT … FOR UPDATE SKIP LOCKED` (MySQL 8), so instances take different rows. Next step would be CDC from the MySQL binlog.
 
 ## 7. "How is the API secured?"
 
 - Stateless JWT (HS256) issued by `POST /api/auth/token`, verified by Spring Security's resource server (`SecurityConfig`).
 - Scopes → authorities: `payments:read` (auditor), `payments:write` (ops). GETs need read or write; everything else needs write.
 - Passwords stored with the delegating encoder (bcrypt).
-- CORS limited to the console origin; CSRF disabled because there are no cookies.
+- CORS limited to one configured origin; CSRF disabled because there are no cookies.
 
 In production: asymmetric keys (RS256) from an identity provider, key rotation, short TTL + refresh tokens.
 
@@ -74,10 +74,10 @@ In production: asymmetric keys (RS256) from an identity provider, key rotation, 
 
 ## 9. "How would you run this in production?"
 
-- Flyway migrations, `ddl-auto=validate`.
+- MySQL 8 schema in `schema.sql` (created at startup, safe to re-run); UUID ids stored as `CHAR(36)`.
 - Indexes: `(account_id, created_at)` for statements, unique on idempotency key, `(published_at, created_at)` for the relay.
-- Health probes (`/actuator/health/liveness`, `/readiness`) for Kubernetes; Prometheus metrics: `payflow_payments_completed_total`, `payflow_outbox_pending`.
-- Multi-stage Dockerfile running as non-root; GitHub Actions runs tests + coverage and builds the console.
+- Health probes (`/actuator/health/liveness`, `/readiness`) for Kubernetes; counters in `/actuator/metrics` (`payflow.outbox.pending`).
+- Multi-stage Dockerfile running as non-root; GitHub Actions runs the tests, including the MySQL container test.
 
 ## 10. "What would you add next?"
 

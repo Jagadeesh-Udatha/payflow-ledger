@@ -1,17 +1,18 @@
-# Full stack: PostgreSQL + Kafka (KRaft, no ZooKeeper) + the API.
+# Full stack: MySQL + Kafka (KRaft, no ZooKeeper) + the API.
 #   docker compose up --build
 services:
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.4
     environment:
-      POSTGRES_DB: payflow
-      POSTGRES_USER: payflow
-      POSTGRES_PASSWORD: payflow
-    ports: ["5432:5432"]
+      MYSQL_DATABASE: payflow
+      MYSQL_USER: payflow
+      MYSQL_PASSWORD: payflow
+      MYSQL_ROOT_PASSWORD: root
+    ports: ["3306:3306"]
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "payflow"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppayflow", "-upayflow"]
       interval: 5s
-      retries: 10
+      retries: 20
 
   kafka:
     image: apache/kafka:3.8.1
@@ -28,11 +29,11 @@ services:
   api:
     build: .
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       kafka:
         condition: service_started
     environment:
-      DB_URL: jdbc:postgresql://postgres:5432/payflow
+      DB_URL: jdbc:mysql://mysql:3306/payflow
       KAFKA_BOOTSTRAP: kafka:9092
     ports: ["8080:8080"]

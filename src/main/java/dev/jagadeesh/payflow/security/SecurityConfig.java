@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/token", "/actuator/health/**", "/actuator/prometheus",
+                        .requestMatchers("/api/auth/token", "/actuator/health/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/**").hasAnyAuthority(READ, WRITE)
                         .requestMatchers("/api/**").hasAuthority(WRITE)

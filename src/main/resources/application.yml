@@ -2,15 +2,22 @@ spring:
   application:
     name: payflow-ledger
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/payflow}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/payflow}
     username: ${DB_USER:payflow}
     password: ${DB_PASSWORD:payflow}
     hikari:
       maximum-pool-size: 20
+  sql:
+    init:
+      mode: always          # schema.sql creates the tables if missing (no migration tool needed)
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
+    properties:
+      hibernate:
+        type.preferred_uuid_jdbc_type: CHAR   # UUIDs stored as CHAR(36), readable in MySQL
+        jdbc.time_zone: UTC
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
     producer:
@@ -24,7 +31,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics
   endpoint:
     health:
       probes:
@@ -41,4 +48,4 @@ payflow:
     token-ttl: 30m
     ops-password: ${PAYFLOW_OPS_PASSWORD:ops-dev-password}
     auditor-password: ${PAYFLOW_AUDITOR_PASSWORD:auditor-dev-password}
-    allowed-origin: ${PAYFLOW_ALLOWED_ORIGIN:http://localhost:5173}
+    allowed-origin: ${PAYFLOW_ALLOWED_ORIGIN:http://localhost:3000}
